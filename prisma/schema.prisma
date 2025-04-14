@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+// provider = "mysql"
+// url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+model QRCode {
+  id               Int      @id @default(autoincrement())
+  title            String
+  shop             String
+  productId        String
+  productHandle    String
+  productVariantId String
+  destination      String
+  scans            Int      @default(0)
+  createdAt        DateTime @default(now())
+}
+
+model TagSettings {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  sessionId         String
+  query             String?
+  pageAction        String?
+  startCursor       String?
+  endCursor         String?
+  cache             Json?
+}
+
+model BoxSettings {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  sessionId         String
+  tags              String?
+  status            String?
+  sort              String?
+  query             String?
+  pageAction        String?
+  startCursor       String?
+  endCursor         String?
+  cache             Json?
+}
+
+model ProductSettings {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  sessionId         String
+  boxId             Int?
+  boxSort           String?
+  boxQuery          String?
+  boxPageAction     String?
+  boxStartCursor    String?
+  boxEndCursor      String?
+  boxCache          Json?
+  tags              String?
+  sort              String?
+  query             String?
+  pageAction        String?
+  startCursor       String?
+  endCursor         String?
+  cache             Json?
+}
+
+model BoxTag {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  tagName           String
+  createdAt         DateTime @default(now())
+  @@unique([shop, tagName])
+  @@index(fields: [shop, tagName], name: "box_tag_index")
+}
+model ProductTag {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  tagName           String
+  createdAt         DateTime @default(now())
+  @@unique([shop, tagName])
+  @@index(fields: [shop, tagName], name: "product_tag_index")
+}
+
+model BoxProduct {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  productId         BigInt
+  title             String
+  display           Boolean
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+  contents          BoxContent[]
+  @@unique([shop, productId])
+  @@index(fields: [shop, productId], name: "product_index")
+}
+
+model BoxContent {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  boxId             Int
+  box               BoxProduct? @relation(fields: [boxId], references: [id])
+  rank              Int?
+  productId         BigInt
+  variantId         BigInt?
+  title             String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+  @@unique([boxId, productId, variantId])
+  @@index(fields: [boxId, productId, variantId], name: "boxContent_index")
+  @@index(fields: [shop, productId], name: "boxContent_product_index")
+}
+
+model BoxOrder {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  orderNo           String
+  status            String
+  items             BoxOrderItem[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+  @@unique([shop, orderNo])
+  @@index(fields: [shop, orderNo], name: "boxOrder_index")
+}
+
+model BoxOrderItem {
+  id                Int      @id @default(autoincrement())
+  boxOrderId        Int
+  boxOrder          BoxOrder? @relation(fields: [boxOrderId], references: [id])
+  boxId             Int
+  productId         BigInt
+  variantId         BigInt
+  LocationId        BigInt
+  ItemId            BigInt
+  status            String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+  @@index(fields: [boxOrderId], name: "boxOrderItem_index")
+}
